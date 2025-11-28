@@ -1,0 +1,126 @@
+import random
+import os
+
+SIZE = 4
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def init_board():
+    board = [[0]*SIZE for _ in range(SIZE)]
+    add_random_tile(board)
+    add_random_tile(board)
+    return board
+
+def add_random_tile(board):
+    empty = [(r, c) for r in range(SIZE) for c in range(SIZE) if board[r][c] == 0]
+    if empty:
+        r, c = random.choice(empty)
+        board[r][c] = random.choice([2, 4])
+
+def print_board(board):
+    for row in board:
+        print("+----"*SIZE + "+")
+        print("".join(f"|{str(num).center(4) if num > 0 else '    '}" for num in row) + "|")
+    print("+----"*SIZE + "+")
+
+def compress(row):
+    new_row = [num for num in row if num != 0]
+    new_row += [0] * (SIZE - len(new_row))
+    return new_row
+
+def merge(row):
+    for i in range(SIZE-1):
+        if row[i] and row[i] == row[i+1]:
+            row[i] *= 2
+            row[i+1] = 0
+    return row
+
+def move_left(board):
+    moved = False
+    for r in range(SIZE):
+        row = compress(board[r])
+        row = merge(row)
+        row = compress(row)
+        if board[r] != row:
+            moved = True
+        board[r] = row
+    return moved
+
+def move_right(board):
+    moved = False
+    for r in range(SIZE):
+        row = board[r][::-1]
+        row = compress(row)
+        row = merge(row)
+        row = compress(row)
+        row = row[::-1]
+        if board[r] != row:
+            moved = True
+        board[r] = row
+    return moved
+
+def move_up(board):
+    moved = False
+    for c in range(SIZE):
+        col = [board[r][c] for r in range(SIZE)]
+        col = compress(col)
+        col = merge(col)
+        col = compress(col)
+        for r in range(SIZE):
+            if board[r][c] != col[r]:
+                moved = True
+            board[r][c] = col[r]
+    return moved
+
+def move_down(board):
+    moved = False
+    for c in range(SIZE):
+        col = [board[r][c] for r in range(SIZE)][::-1]
+        col = compress(col)
+        col = merge(col)
+        col = compress(col)
+        col = col[::-1]
+        for r in range(SIZE):
+            if board[r][c] != col[r]:
+                moved = True
+            board[r][c] = col[r]
+    return moved
+
+def can_move(board):
+    for r in range(SIZE):
+        for c in range(SIZE):
+            if board[r][c] == 0:
+                return True
+            if c < SIZE-1 and board[r][c] == board[r][c+1]:
+                return True
+            if r < SIZE-1 and board[r][c] == board[r+1][c]:
+                return True
+    return False
+
+def main():
+    board = init_board()
+    while True:
+        clear_screen()
+        print_board(board)
+        if not can_move(board):
+            print("Game Over!")
+            break
+        move = input("Move (W/A/S/D) or Q to quit: ").upper()
+        if move == 'Q':
+            print("Bye!")
+            break
+        moved = False
+        if move == 'W':
+            moved = move_up(board)
+        elif move == 'S':
+            moved = move_down(board)
+        elif move == 'A':
+            moved = move_left(board)
+        elif move == 'D':
+            moved = move_right(board)
+        if moved:
+            add_random_tile(board)
+
+if __name__ == "__main__":
+    main()
